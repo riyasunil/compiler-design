@@ -9,7 +9,11 @@ export default function page() {
     const [rows, setRows] = useState([{ id: 1, colCount: 1 }]);
     const [fields, setFields] = useState([{ id: 1, rowId: 1, value: '', }]);
 
+    // const [prods, setProds] = useState({ rowID: "", head: "", tail: [] });
+    const [prods, setProds] = useState([]);
+
     const [inputString, setInputString] = useState("")
+
 
     const handleAddField = (rowIndex) => {
         const newId = fields.length + 1;
@@ -23,6 +27,7 @@ export default function page() {
         const newId = rows.length + 1;
         setRows([...rows, { id: newId, colCount: 1 }]);
         setFields([...fields, { id: (fields.length + 1), rowId: newId, value: '' }]);
+        setProds([...prods, { rowID: newId, head: '', tail: [] }]);
     };
 
     const logFieldsByRowId = () => {
@@ -35,9 +40,56 @@ export default function page() {
         });
     };
 
-    const hanflesumit = () => {
-        logFieldsByRowId();
+    // const handleHeadChange = (value, rowIndex) => {
+    //     const updatedProds = { ...prods };
+    //     updatedProds.rowID = rows[rowIndex].id; // Set the row ID
+    //     updatedProds.head = value; // Set the head value
+    //     setProds(updatedProds);
+    // };
+    const handleHeadChange = (value, rowIndex) => {
+        const updatedProds = [...prods];
+        const rowId = rows[rowIndex].id;
+        const prodIndex = updatedProds.findIndex(prod => prod.rowID === rowId);
+        if (prodIndex !== -1) {
+            updatedProds[prodIndex].head = value;
+        } else {
+            updatedProds.push({ rowID: rowId, head: value, tail: [] });
+        }
+        setProds(updatedProds);
+    };
+
+    // const handleTailChange = (value, rowIndex) => {
+    //     const updatedProds = { ...prods };
+    //     const rowId = rows[rowIndex].id;
+    //     const tailIndex = fields.filter(field => field.rowId === rowId).length; // Get the index for the new tail value
+    //     updatedProds.tail[rowIndex] = { rowId: rowId, value: value };
+    //     setProds(updatedProds);
+    // };
+    const handleTailChange = (value, rowIndex) => {
+        if (value == "empty") {
+            console.log("hi")
+        }
+        const updatedProds = [...prods];
+        const rowId = rows[rowIndex].id;
+        const tailIndex = fields.filter(field => field.rowId === rowId).length;
+        const prodIndex = updatedProds.findIndex(prod => prod.rowID === rowId);
+        if (prodIndex !== -1) {
+            if (!updatedProds[prodIndex].tail) updatedProds[prodIndex].tail = [];
+            updatedProds[prodIndex].tail[tailIndex] = value;
+        } else {
+            updatedProds.push({ rowID: rowId, head: '', tail: [value] });
+        }
+        setProds(updatedProds);
+    };
+
+
+
+    const handleSubmit = () => {
+        console.log(prods)
+        
     }
+
+
 
     return (
         <div className='h-screen bg-white text-black flex flex-col justify-center items-center'>
@@ -55,6 +107,7 @@ export default function page() {
                             id={`head-${row.id}`}
                             variant="outlined"
                             fullWidth={true}
+                            onChange={(e) => handleHeadChange(e.target.value, rowIndex)}
                         />
                     </Box>
                     {/* Arrow */}
@@ -68,6 +121,7 @@ export default function page() {
                                 id={`field-${fields.length + 1}`}
                                 variant="outlined"
                                 fullWidth={true}
+                                onChange={(e) => handleTailChange(e.target.value, rowIndex)}
                             />
                         </Box>
                     ))}
@@ -83,7 +137,7 @@ export default function page() {
                 <CiSquarePlus color='black' size={32} />
             </button>
 
-            <button className="text-black" onClick={() => hanflesumit()}>submit</button>
+            <button className="text-black" onClick={() => handleSubmit()}>submit</button>
 
         </div>
     )
