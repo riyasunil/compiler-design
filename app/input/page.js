@@ -10,62 +10,40 @@ import { db } from "../../config/firebase";
 
 export default function page() {
     const [rows, setRows] = useState([{ id: 1, colCount: 1 }]);
-    const [fields, setFields] = useState([{ id: 1, rowId: 1, value: '', }]);
-
     // const [prods, setProds] = useState({ rowID: "", head: "", tail: [] });
-    const [prods, setProds] = useState([]);
 
     const [inputString, setInputString] = useState("")
+    const [prods, setProds] = useState([])
 
 
-    const handleAddField = (rowIndex) => {
-        const newId = fields.length + 1;
-        const rowId = rows[rowIndex].id; // Get the row id
-        setFields([...fields, { id: newId, rowId: rowId, value: '' }]); // Include the row id for the new field
-        const updatedRows = [...rows];
-        updatedRows[rowIndex].colCount += 1;
-        setRows(updatedRows);
-    };
     const handleAddRow = () => {
         const newId = rows.length + 1;
         setRows([...rows, { id: newId, colCount: 1 }]);
-        setFields([...fields, { id: (fields.length + 1), rowId: newId, value: '' }]);
-        setProds([...prods, { rowID: newId, head: '', tail: [] }]);
+        setProds([...prods, { rowID: newId, head: '', tail: "" ,}]);
     };
-
-    const logFieldsByRowId = () => {
-        rows.forEach(row => {
-            const fieldsByRowId = fields.filter(field => field.rowId === row.id);
-            console.log(`Row ID: ${row.id}, Number of Fields: ${fieldsByRowId.length}`);
-            fieldsByRowId.forEach(field => {
-                console.log(`Field ID: ${field.id}`);
-            });
-        });
-    };
-
 
     const handleHeadChange = (value, rowIndex) => {
+        console.log(value)
         const updatedProds = [...prods];
         const rowId = rows[rowIndex].id;
         const prodIndex = updatedProds.findIndex(prod => prod.rowID === rowId);
         if (prodIndex !== -1) {
             updatedProds[prodIndex].head = value;
         } else {
-            updatedProds.push({ rowID: rowId, head: value, tail: [] });
+            updatedProds.push({ rowID: rowId, head: value, tail: "" });
         }
         setProds(updatedProds);
     };
 
     const handleTailChange = (value, rowIndex) => {
+        console.log(value)
         const updatedProds = [...prods];
         const rowId = rows[rowIndex].id;
-        const tailIndex = fields.filter(field => field.rowId === rowId).length;
         const prodIndex = updatedProds.findIndex(prod => prod.rowID === rowId);
         if (prodIndex !== -1) {
-            if (!updatedProds[prodIndex].tail) updatedProds[prodIndex].tail = [];
-            updatedProds[prodIndex].tail.push(value); // Push the new value to the tail array
+            updatedProds[prodIndex].tail = value;
         } else {
-            updatedProds.push({ rowID: rowId, head: '', tail: [value] });
+            updatedProds.push({ rowID: rowId, head: "", tail: value });
         }
         setProds(updatedProds);
     };
@@ -73,15 +51,10 @@ export default function page() {
 
 
     const handleSubmit = async (e) => {
-        logFieldsByRowId();
         try {
-            const filteredProds = prods.map(prod => ({
-                ...prod,
-                tail: prod.tail.filter(item => item !== "empty")
-            }));
-
             console.log(prods)
             const docRef = await addDoc(collection(db, "prods"), {
+                string: inputString,
                 prod: prods,
             });
             console.log("Document written with ID: ", docRef.id);
@@ -116,20 +89,16 @@ export default function page() {
                         <IoIosArrowRoundForward color='black' size={32} />
                     </div>
                     {/* Right side */}
-                    {[...Array(row.colCount)].map((_, colIndex) => (
-                        <Box key={colIndex} width={50} marginRight={colIndex === row.colCount - 1 ? 0 : 2}>
-                            <TextField
-                                id={`field-${fields.length + 1}`}
-                                variant="outlined"
-                                fullWidth={true}
-                                onChange={(e) => handleTailChange(e.target.value, rowIndex)}
-                            />
-                        </Box>
-                    ))}
-                    {/* add-col buttom */}
-                    <button className="add-col arrow px-2" onClick={() => handleAddField(rowIndex)}>
-                        <CiSquarePlus color='black' size={32} />
-                    </button>
+
+                    <Box width={300} >
+                        <TextField
+                            id={`head-${row.id}`}
+                            variant="outlined"
+                            fullWidth={true}
+                            onChange={(e) => handleTailChange(e.target.value, rowIndex)}
+                        />
+                    </Box>
+
                 </div>
             ))}
 
