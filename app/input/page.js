@@ -4,6 +4,9 @@ import { TextField, Box } from '@mui/material';
 import { IoIosArrowRoundForward } from "react-icons/io";
 import { CiSquarePlus } from "react-icons/ci";
 import { RxDividerVertical } from "react-icons/rx";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../../config/firebase";
+
 
 export default function page() {
     const [rows, setRows] = useState([{ id: 1, colCount: 1 }]);
@@ -40,12 +43,7 @@ export default function page() {
         });
     };
 
-    // const handleHeadChange = (value, rowIndex) => {
-    //     const updatedProds = { ...prods };
-    //     updatedProds.rowID = rows[rowIndex].id; // Set the row ID
-    //     updatedProds.head = value; // Set the head value
-    //     setProds(updatedProds);
-    // };
+
     const handleHeadChange = (value, rowIndex) => {
         const updatedProds = [...prods];
         const rowId = rows[rowIndex].id;
@@ -58,24 +56,14 @@ export default function page() {
         setProds(updatedProds);
     };
 
-    // const handleTailChange = (value, rowIndex) => {
-    //     const updatedProds = { ...prods };
-    //     const rowId = rows[rowIndex].id;
-    //     const tailIndex = fields.filter(field => field.rowId === rowId).length; // Get the index for the new tail value
-    //     updatedProds.tail[rowIndex] = { rowId: rowId, value: value };
-    //     setProds(updatedProds);
-    // };
     const handleTailChange = (value, rowIndex) => {
-        if (value == "empty") {
-            console.log("hi")
-        }
         const updatedProds = [...prods];
         const rowId = rows[rowIndex].id;
         const tailIndex = fields.filter(field => field.rowId === rowId).length;
         const prodIndex = updatedProds.findIndex(prod => prod.rowID === rowId);
         if (prodIndex !== -1) {
             if (!updatedProds[prodIndex].tail) updatedProds[prodIndex].tail = [];
-            updatedProds[prodIndex].tail[tailIndex] = value;
+            updatedProds[prodIndex].tail.push(value); // Push the new value to the tail array
         } else {
             updatedProds.push({ rowID: rowId, head: '', tail: [value] });
         }
@@ -84,9 +72,22 @@ export default function page() {
 
 
 
-    const handleSubmit = () => {
-        console.log(prods)
-        
+    const handleSubmit = async (e) => {
+        logFieldsByRowId();
+        try {
+            const filteredProds = prods.map(prod => ({
+                ...prod,
+                tail: prod.tail.filter(item => item !== "empty")
+            }));
+
+            console.log(prods)
+            const docRef = await addDoc(collection(db, "prods"), {
+                prod: prods,
+            });
+            console.log("Document written with ID: ", docRef.id);
+        } catch (e) {
+            console.error("Error adding document: ", e);
+        }
     }
 
 
