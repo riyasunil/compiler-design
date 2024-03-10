@@ -1,25 +1,42 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Box } from '@mui/material';
 import { IoIosArrowRoundForward } from "react-icons/io";
 import { CiSquarePlus } from "react-icons/ci";
 import { RxDividerVertical } from "react-icons/rx";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, setDoc, query, where, getDoc, doc } from "firebase/firestore";
 import { db } from "../../config/firebase";
+import ParseTrees from '../parsetrees/[slug]';
+import { useRouter } from 'next/navigation';
+
 
 
 export default function page() {
+    const router = useRouter();
     const [rows, setRows] = useState([{ id: 1, colCount: 1 }]);
+    const [data, setData] = useState(null);
+
     // const [prods, setProds] = useState({ rowID: "", head: "", tail: [] });
 
     const [inputString, setInputString] = useState("")
     const [prods, setProds] = useState([])
+    const [docID, setDocID] = useState("")
+
+    useEffect(() => {
+
+        if (docID) {
+            getData();
+        } else {
+            console.log("fuck")
+        }
+    }, [docID]);
+
 
 
     const handleAddRow = () => {
         const newId = rows.length + 1;
         setRows([...rows, { id: newId, colCount: 1 }]);
-        setProds([...prods, { rowID: newId, head: '', tail: "" ,}]);
+        setProds([...prods, { rowID: newId, head: '', tail: "", }]);
     };
 
     const handleHeadChange = (value, rowIndex) => {
@@ -58,10 +75,29 @@ export default function page() {
                 prod: prods,
             });
             console.log("Document written with ID: ", docRef.id);
+            setDocID(docRef.id);
+            // router.push(`/parsetrees/${docRef.id}`);
         } catch (e) {
             console.error("Error adding document: ", e);
         }
     }
+
+    const getData = async () => {
+        try {
+            const docRef = doc(db, "prods", docID);
+            const docSnapshot = await getDoc(docRef);
+
+            if (docSnapshot.exists()) {
+                const documentData = { id: docSnapshot.id, ...docSnapshot.data() };
+                setData(documentData);
+            } else {
+                console.error("Document not found");
+            }
+        } catch (error) {
+            console.error("Error getting document: ", error);
+        }
+        console.log(data)
+    };
 
 
 
@@ -108,6 +144,19 @@ export default function page() {
             </button>
 
             <button className="text-black" onClick={() => handleSubmit()}>submit</button>
+
+            <div className=' bg-white text-black flex flex-col justify-center items-center'>
+                <h1>Parse Tree</h1>
+                {data && data.prod && Array.isArray(data.prod) && (
+                    <ul className='text-black'>
+                        {data.prod.map((prodItem, index) => (
+                            <li key={index}>
+                                Row ID: {prodItem.rowID}, Head: {prodItem.head}, Tail: {JSON.stringify(prodItem.tail)}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
 
         </div>
     )
